@@ -1,0 +1,341 @@
+install.packages("FactoMineR")
+library(FactoMineR)
+
+# Read in the data (example, k = 7, lr = 200)
+codebook <- read.table("C:/Users/KNU/Desktop/HGK/Roadkill/k7_200_codebook.txt", header = TRUE)
+# codebook <- read.table("C:/Users/KNU/Desktop/HGK/Roadkill/k4_200_codebook.txt", header = TRUE)
+# codebook <- read.table("C:/Users/KNU/Desktop/HGK/Roadkill/k1_200_codebook.txt", header = TRUE)
+
+# Extract columns from codebook
+Y <- codebook[, 1]
+X <- codebook[, 2]
+lane <- codebook[, 3]
+road <- codebook[, 4]
+fence <- codebook[, 5]
+bus <- codebook[, 6]
+large.truck <- codebook[, 7]
+D.Urban <- codebook[, 8]
+D.agri <- codebook[, 9]
+D.forest <- codebook[, 10]
+D.grass <- codebook[, 11]
+D.wetland <- codebook[, 12]
+D.bare <- codebook[, 13]
+D.water <- codebook[, 14]
+A.Urban <- codebook[, 15]
+A.agri <- codebook[, 16]
+A.Grass <- codebook[, 17]
+A.wetland <- codebook[, 18]
+A.bare <- codebook[, 19]
+A.water <- codebook[, 20]
+adult <- codebook[, 21]
+subadult <- codebook[,22]
+juvenile <- codebook[,23]
+nonidentification <- codebook[,24]
+
+matrix_Y <- matrix(Y, nrow = 15, ncol = 15)
+matrix_X <- matrix(X, nrow = 15, ncol = 15)
+matrix_lane <- matrix(lane, nrow = 15, ncol = 15)
+matrix_road <- matrix(road, nrow = 15, ncol = 15)
+matrix_fence <- matrix(fence, nrow = 15, ncol = 15)
+matrix_bus <- matrix(bus, nrow = 15, ncol = 15)
+matrix_large.truck <- matrix(large.truck, nrow = 15, ncol = 15)
+matrix_D.Urban <- matrix(D.Urban, nrow = 15, ncol = 15)
+matrix_D.agri <- matrix(D.agri, nrow = 15, ncol = 15)
+matrix_D.forest <- matrix(D.forest, nrow = 15, ncol = 15)
+matrix_D.grass <- matrix(D.grass, nrow = 15, ncol = 15)
+matrix_D.wetland <- matrix(D.wetland, nrow = 15, ncol = 15)
+matrix_D.bare <- matrix(D.bare, nrow = 15, ncol = 15)
+matrix_D.water <- matrix(D.water, nrow = 15, ncol = 15)
+matrix_A.Urban <- matrix(A.Urban, nrow = 15, ncol = 15)
+matrix_A.agri <- matrix(A.agri, nrow = 15, ncol = 15)
+matrix_A.Grass <- matrix(A.Grass, nrow = 15, ncol = 15)
+matrix_A.wetland <- matrix(A.wetland, nrow = 15, ncol = 15)
+matrix_A.bare <- matrix(A.bare, nrow = 15, ncol = 15)
+matrix_A.water <- matrix(A.water, nrow = 15, ncol = 15)
+matrix_adult <- matrix(adult, nrow = 15, ncol = 15)
+matrix_subadult <- matrix(subadult, nrow = 15, ncol = 15)
+matrix_juvenile <- matrix(juvenile, nrow = 15, ncol = 15)
+matrix_nonidentification <- matrix(nonidentification, nrow = 15, ncol = 15)
+
+
+results = data.frame(matrix(nrow=20,ncol=3))
+results$Target = "Adult"
+results$Var = colnames(codebook[,1:20])
+results[1,1] = coeffRV(matrix_Y,matrix_adult)$rv
+results[2,1] = coeffRV(matrix_X ,matrix_adult)$rv
+results[3,1] = coeffRV(matrix_lane ,matrix_adult)$rv
+results[4,1] = coeffRV(matrix_road ,matrix_adult)$rv
+results[5,1] = coeffRV(matrix_fence,matrix_adult)$rv
+results[6,1] = coeffRV(matrix_bus,matrix_adult)$rv
+results[7,1] = coeffRV(matrix_large.truck,matrix_adult)$rv
+results[8,1] = coeffRV(matrix_D.Urban,matrix_adult)$rv
+results[9,1] = coeffRV(matrix_D.agri ,matrix_adult)$rv
+results[10,1] = coeffRV(matrix_D.forest ,matrix_adult)$rv
+results[11,1] = coeffRV(matrix_D.grass ,matrix_adult)$rv
+results[12,1] = coeffRV(matrix_D.wetland,matrix_adult)$rv
+results[13,1] = coeffRV(matrix_D.bare,matrix_adult)$rv
+results[14,1] = coeffRV(matrix_D.water ,matrix_adult)$rv
+results[15,1] = coeffRV(matrix_A.Urban ,matrix_adult)$rv
+results[16,1] = coeffRV(matrix_A.agri ,matrix_adult)$rv
+results[17,1] = coeffRV(matrix_A.Grass ,matrix_adult)$rv
+results[18,1] = coeffRV(matrix_A.wetland ,matrix_adult)$rv
+results[19,1] = coeffRV(matrix_A.bare ,matrix_adult)$rv
+results[20,1] = coeffRV(matrix_A.water ,matrix_adult)$rv
+
+results[1,2] = coeffRV(matrix_Y,matrix_adult)$p.value
+results[2,2] = coeffRV(matrix_X ,matrix_adult)$p.value
+results[3,2] = coeffRV(matrix_lane ,matrix_adult)$p.value
+results[4,2] = coeffRV(matrix_road ,matrix_adult)$p.value
+results[5,2] = coeffRV(matrix_fence,matrix_adult)$p.value
+results[6,2] = coeffRV(matrix_bus,matrix_adult)$p.value
+results[7,2] = coeffRV(matrix_large.truck,matrix_adult)$p.value
+results[8,2] = coeffRV(matrix_D.Urban,matrix_adult)$p.value
+results[9,2] = coeffRV(matrix_D.agri ,matrix_adult)$p.value
+results[10,2] = coeffRV(matrix_D.forest ,matrix_adult)$p.value
+results[11,2] = coeffRV(matrix_D.grass ,matrix_adult)$p.value
+results[12,2] = coeffRV(matrix_D.wetland,matrix_adult)$p.value
+results[13,2] = coeffRV(matrix_D.bare,matrix_adult)$p.value
+results[14,2] = coeffRV(matrix_D.water ,matrix_adult)$p.value
+results[15,2] = coeffRV(matrix_A.Urban ,matrix_adult)$p.value
+results[16,2] = coeffRV(matrix_A.agri ,matrix_adult)$p.value
+results[17,2] = coeffRV(matrix_A.Grass ,matrix_adult)$p.value
+results[18,2] = coeffRV(matrix_A.wetland ,matrix_adult)$p.value
+results[19,2] = coeffRV(matrix_A.bare ,matrix_adult)$p.value
+results[20,2] = coeffRV(matrix_A.water ,matrix_adult)$p.value
+
+results[1,3] = cor.test(matrix_Y,matrix_adult)$estimate
+results[2,3] = cor.test(matrix_X ,matrix_adult)$estimate
+results[3,3] = cor.test(matrix_lane ,matrix_adult)$estimate
+results[4,3] = cor.test(matrix_road ,matrix_adult)$estimate
+results[5,3] = cor.test(matrix_fence,matrix_adult)$estimate
+results[6,3] = cor.test(matrix_bus,matrix_adult)$estimate
+results[7,3] = cor.test(matrix_large.truck,matrix_adult)$estimate
+results[8,3] = cor.test(matrix_D.Urban,matrix_adult)$estimate
+results[9,3] = cor.test(matrix_D.agri ,matrix_adult)$estimate
+results[10,3] = cor.test(matrix_D.forest ,matrix_adult)$estimate
+results[11,3] = cor.test(matrix_D.grass ,matrix_adult)$estimate
+results[12,3] = cor.test(matrix_D.wetland,matrix_adult)$estimate
+results[13,3] = cor.test(matrix_D.bare,matrix_adult)$estimate
+results[14,3] = cor.test(matrix_D.water ,matrix_adult)$estimate
+results[15,3] = cor.test(matrix_A.Urban ,matrix_adult)$estimate
+results[16,3] = cor.test(matrix_A.agri ,matrix_adult)$estimate
+results[17,3] = cor.test(matrix_A.Grass ,matrix_adult)$estimate
+results[18,3] = cor.test(matrix_A.wetland ,matrix_adult)$estimate
+results[19,3] = cor.test(matrix_A.bare ,matrix_adult)$estimate
+results[20,3] = cor.test(matrix_A.water ,matrix_adult)$estimate
+
+results_subadult = data.frame(matrix(nrow=20,ncol=3))
+results_subadult$Target = "Subadult"
+results_subadult$Var = colnames(codebook[,1:20])
+results_subadult[1,1] = coeffRV(matrix_Y,matrix_subadult)$rv
+results_subadult[2,1] = coeffRV(matrix_X ,matrix_subadult)$rv
+results_subadult[3,1] = coeffRV(matrix_lane ,matrix_subadult)$rv
+results_subadult[4,1] = coeffRV(matrix_road ,matrix_subadult)$rv
+results_subadult[5,1] = coeffRV(matrix_fence,matrix_subadult)$rv
+results_subadult[6,1] = coeffRV(matrix_bus,matrix_subadult)$rv
+results_subadult[7,1] = coeffRV(matrix_large.truck,matrix_subadult)$rv
+results_subadult[8,1] = coeffRV(matrix_D.Urban,matrix_subadult)$rv
+results_subadult[9,1] = coeffRV(matrix_D.agri ,matrix_subadult)$rv
+results_subadult[10,1] = coeffRV(matrix_D.forest ,matrix_subadult)$rv
+results_subadult[11,1] = coeffRV(matrix_D.grass ,matrix_subadult)$rv
+results_subadult[12,1] = coeffRV(matrix_D.wetland,matrix_subadult)$rv
+results_subadult[13,1] = coeffRV(matrix_D.bare,matrix_subadult)$rv
+results_subadult[14,1] = coeffRV(matrix_D.water ,matrix_subadult)$rv
+results_subadult[15,1] = coeffRV(matrix_A.Urban ,matrix_subadult)$rv
+results_subadult[16,1] = coeffRV(matrix_A.agri ,matrix_subadult)$rv
+results_subadult[17,1] = coeffRV(matrix_A.Grass ,matrix_subadult)$rv
+results_subadult[18,1] = coeffRV(matrix_A.wetland ,matrix_subadult)$rv
+results_subadult[19,1] = coeffRV(matrix_A.bare ,matrix_subadult)$rv
+results_subadult[20,1] = coeffRV(matrix_A.water ,matrix_subadult)$rv
+
+results_subadult[1,2] = coeffRV(matrix_Y,matrix_subadult)$p.value
+results_subadult[2,2] = coeffRV(matrix_X ,matrix_subadult)$p.value
+results_subadult[3,2] = coeffRV(matrix_lane ,matrix_subadult)$p.value
+results_subadult[4,2] = coeffRV(matrix_road ,matrix_subadult)$p.value
+results_subadult[5,2] = coeffRV(matrix_fence,matrix_subadult)$p.value
+results_subadult[6,2] = coeffRV(matrix_bus,matrix_subadult)$p.value
+results_subadult[7,2] = coeffRV(matrix_large.truck,matrix_subadult)$p.value
+results_subadult[8,2] = coeffRV(matrix_D.Urban,matrix_subadult)$p.value
+results_subadult[9,2] = coeffRV(matrix_D.agri ,matrix_subadult)$p.value
+results_subadult[10,2] = coeffRV(matrix_D.forest ,matrix_subadult)$p.value
+results_subadult[11,2] = coeffRV(matrix_D.grass ,matrix_subadult)$p.value
+results_subadult[12,2] = coeffRV(matrix_D.wetland,matrix_subadult)$p.value
+results_subadult[13,2] = coeffRV(matrix_D.bare,matrix_subadult)$p.value
+results_subadult[14,2] = coeffRV(matrix_D.water ,matrix_subadult)$p.value
+results_subadult[15,2] = coeffRV(matrix_A.Urban ,matrix_subadult)$p.value
+results_subadult[16,2] = coeffRV(matrix_A.agri ,matrix_subadult)$p.value
+results_subadult[17,2] = coeffRV(matrix_A.Grass ,matrix_subadult)$p.value
+results_subadult[18,2] = coeffRV(matrix_A.wetland ,matrix_subadult)$p.value
+results_subadult[19,2] = coeffRV(matrix_A.bare ,matrix_subadult)$p.value
+results_subadult[20,2] = coeffRV(matrix_A.water ,matrix_subadult)$p.value
+
+results_subadult[1,3] = cor.test(matrix_Y,matrix_subadult)$estimate
+results_subadult[2,3] = cor.test(matrix_X ,matrix_subadult)$estimate
+results_subadult[3,3] = cor.test(matrix_lane ,matrix_subadult)$estimate
+results_subadult[4,3] = cor.test(matrix_road ,matrix_subadult)$estimate
+results_subadult[5,3] = cor.test(matrix_fence,matrix_subadult)$estimate
+results_subadult[6,3] = cor.test(matrix_bus,matrix_subadult)$estimate
+results_subadult[7,3] = cor.test(matrix_large.truck,matrix_subadult)$estimate
+results_subadult[8,3] = cor.test(matrix_D.Urban,matrix_subadult)$estimate
+results_subadult[9,3] = cor.test(matrix_D.agri ,matrix_subadult)$estimate
+results_subadult[10,3] = cor.test(matrix_D.forest ,matrix_subadult)$estimate
+results_subadult[11,3] = cor.test(matrix_D.grass ,matrix_subadult)$estimate
+results_subadult[12,3] = cor.test(matrix_D.wetland,matrix_subadult)$estimate
+results_subadult[13,3] = cor.test(matrix_D.bare,matrix_subadult)$estimate
+results_subadult[14,3] = cor.test(matrix_D.water ,matrix_subadult)$estimate
+results_subadult[15,3] = cor.test(matrix_A.Urban ,matrix_subadult)$estimate
+results_subadult[16,3] = cor.test(matrix_A.agri ,matrix_subadult)$estimate
+results_subadult[17,3] = cor.test(matrix_A.Grass ,matrix_subadult)$estimate
+results_subadult[18,3] = cor.test(matrix_A.wetland ,matrix_subadult)$estimate
+results_subadult[19,3] = cor.test(matrix_A.bare ,matrix_subadult)$estimate
+results_subadult[20,3] = cor.test(matrix_A.water ,matrix_subadult)$estimate
+
+results_juvenile = data.frame(matrix(nrow=20,ncol=3))
+results_juvenile$Target = "Juvenile"
+results_juvenile$Var = colnames(codebook[,1:20])
+results_juvenile[1,1] = coeffRV(matrix_Y,matrix_juvenile)$rv
+results_juvenile[2,1] = coeffRV(matrix_X ,matrix_juvenile)$rv
+results_juvenile[3,1] = coeffRV(matrix_lane ,matrix_juvenile)$rv
+results_juvenile[4,1] = coeffRV(matrix_road ,matrix_juvenile)$rv
+results_juvenile[5,1] = coeffRV(matrix_fence,matrix_juvenile)$rv
+results_juvenile[6,1] = coeffRV(matrix_bus,matrix_juvenile)$rv
+results_juvenile[7,1] = coeffRV(matrix_large.truck,matrix_juvenile)$rv
+results_juvenile[8,1] = coeffRV(matrix_D.Urban,matrix_juvenile)$rv
+results_juvenile[9,1] = coeffRV(matrix_D.agri ,matrix_juvenile)$rv
+results_juvenile[10,1] = coeffRV(matrix_D.forest ,matrix_juvenile)$rv
+results_juvenile[11,1] = coeffRV(matrix_D.grass ,matrix_juvenile)$rv
+results_juvenile[12,1] = coeffRV(matrix_D.wetland,matrix_juvenile)$rv
+results_juvenile[13,1] = coeffRV(matrix_D.bare,matrix_juvenile)$rv
+results_juvenile[14,1] = coeffRV(matrix_D.water ,matrix_juvenile)$rv
+results_juvenile[15,1] = coeffRV(matrix_A.Urban ,matrix_juvenile)$rv
+results_juvenile[16,1] = coeffRV(matrix_A.agri ,matrix_juvenile)$rv
+results_juvenile[17,1] = coeffRV(matrix_A.Grass ,matrix_juvenile)$rv
+results_juvenile[18,1] = coeffRV(matrix_A.wetland ,matrix_juvenile)$rv
+results_juvenile[19,1] = coeffRV(matrix_A.bare ,matrix_juvenile)$rv
+results_juvenile[20,1] = coeffRV(matrix_A.water ,matrix_juvenile)$rv
+
+results_juvenile[1,2] = coeffRV(matrix_Y,matrix_juvenile)$p.value
+results_juvenile[2,2] = coeffRV(matrix_X ,matrix_juvenile)$p.value
+results_juvenile[3,2] = coeffRV(matrix_lane ,matrix_juvenile)$p.value
+results_juvenile[4,2] = coeffRV(matrix_road ,matrix_juvenile)$p.value
+results_juvenile[5,2] = coeffRV(matrix_fence,matrix_juvenile)$p.value
+results_juvenile[6,2] = coeffRV(matrix_bus,matrix_juvenile)$p.value
+results_juvenile[7,2] = coeffRV(matrix_large.truck,matrix_juvenile)$p.value
+results_juvenile[8,2] = coeffRV(matrix_D.Urban,matrix_juvenile)$p.value
+results_juvenile[9,2] = coeffRV(matrix_D.agri ,matrix_juvenile)$p.value
+results_juvenile[10,2] = coeffRV(matrix_D.forest ,matrix_juvenile)$p.value
+results_juvenile[11,2] = coeffRV(matrix_D.grass ,matrix_juvenile)$p.value
+results_juvenile[12,2] = coeffRV(matrix_D.wetland,matrix_juvenile)$p.value
+results_juvenile[13,2] = coeffRV(matrix_D.bare,matrix_juvenile)$p.value
+results_juvenile[14,2] = coeffRV(matrix_D.water ,matrix_juvenile)$p.value
+results_juvenile[15,2] = coeffRV(matrix_A.Urban ,matrix_juvenile)$p.value
+results_juvenile[16,2] = coeffRV(matrix_A.agri ,matrix_juvenile)$p.value
+results_juvenile[17,2] = coeffRV(matrix_A.Grass ,matrix_juvenile)$p.value
+results_juvenile[18,2] = coeffRV(matrix_A.wetland ,matrix_juvenile)$p.value
+results_juvenile[19,2] = coeffRV(matrix_A.bare ,matrix_juvenile)$p.value
+results_juvenile[20,2] = coeffRV(matrix_A.water ,matrix_juvenile)$p.value
+
+results_juvenile[1,3] = cor.test(matrix_Y,matrix_juvenile)$estimate
+results_juvenile[2,3] = cor.test(matrix_X ,matrix_juvenile)$estimate
+results_juvenile[3,3] = cor.test(matrix_lane ,matrix_juvenile)$estimate
+results_juvenile[4,3] = cor.test(matrix_road ,matrix_juvenile)$estimate
+results_juvenile[5,3] = cor.test(matrix_fence,matrix_juvenile)$estimate
+results_juvenile[6,3] = cor.test(matrix_bus,matrix_juvenile)$estimate
+results_juvenile[7,3] = cor.test(matrix_large.truck,matrix_juvenile)$estimate
+results_juvenile[8,3] = cor.test(matrix_D.Urban,matrix_juvenile)$estimate
+results_juvenile[9,3] = cor.test(matrix_D.agri ,matrix_juvenile)$estimate
+results_juvenile[10,3] = cor.test(matrix_D.forest ,matrix_juvenile)$estimate
+results_juvenile[11,3] = cor.test(matrix_D.grass ,matrix_juvenile)$estimate
+results_juvenile[12,3] = cor.test(matrix_D.wetland,matrix_juvenile)$estimate
+results_juvenile[13,3] = cor.test(matrix_D.bare,matrix_juvenile)$estimate
+results_juvenile[14,3] = cor.test(matrix_D.water ,matrix_juvenile)$estimate
+results_juvenile[15,3] = cor.test(matrix_A.Urban ,matrix_juvenile)$estimate
+results_juvenile[16,3] = cor.test(matrix_A.agri ,matrix_juvenile)$estimate
+results_juvenile[17,3] = cor.test(matrix_A.Grass ,matrix_juvenile)$estimate
+results_juvenile[18,3] = cor.test(matrix_A.wetland ,matrix_juvenile)$estimate
+results_juvenile[19,3] = cor.test(matrix_A.bare ,matrix_juvenile)$estimate
+results_juvenile[20,3] = cor.test(matrix_A.water ,matrix_juvenile)$estimate
+
+results_nonidentification = data.frame(matrix(nrow=20,ncol=3))
+results_nonidentification$Target = "Non-identification"
+results_nonidentification$Var = colnames(codebook[,1:20])
+results_nonidentification[1,1] = coeffRV(matrix_Y,matrix_nonidentification)$rv
+results_nonidentification[2,1] = coeffRV(matrix_X ,matrix_nonidentification)$rv
+results_nonidentification[3,1] = coeffRV(matrix_lane ,matrix_nonidentification)$rv
+results_nonidentification[4,1] = coeffRV(matrix_road ,matrix_nonidentification)$rv
+results_nonidentification[5,1] = coeffRV(matrix_fence,matrix_nonidentification)$rv
+results_nonidentification[6,1] = coeffRV(matrix_bus,matrix_nonidentification)$rv
+results_nonidentification[7,1] = coeffRV(matrix_large.truck,matrix_nonidentification)$rv
+results_nonidentification[8,1] = coeffRV(matrix_D.Urban,matrix_nonidentification)$rv
+results_nonidentification[9,1] = coeffRV(matrix_D.agri ,matrix_nonidentification)$rv
+results_nonidentification[10,1] = coeffRV(matrix_D.forest ,matrix_nonidentification)$rv
+results_nonidentification[11,1] = coeffRV(matrix_D.grass ,matrix_nonidentification)$rv
+results_nonidentification[12,1] = coeffRV(matrix_D.wetland,matrix_nonidentification)$rv
+results_nonidentification[13,1] = coeffRV(matrix_D.bare,matrix_nonidentification)$rv
+results_nonidentification[14,1] = coeffRV(matrix_D.water ,matrix_nonidentification)$rv
+results_nonidentification[15,1] = coeffRV(matrix_A.Urban ,matrix_nonidentification)$rv
+results_nonidentification[16,1] = coeffRV(matrix_A.agri ,matrix_nonidentification)$rv
+results_nonidentification[17,1] = coeffRV(matrix_A.Grass ,matrix_nonidentification)$rv
+results_nonidentification[18,1] = coeffRV(matrix_A.wetland ,matrix_nonidentification)$rv
+results_nonidentification[19,1] = coeffRV(matrix_A.bare ,matrix_nonidentification)$rv
+results_nonidentification[20,1] = coeffRV(matrix_A.water ,matrix_nonidentification)$rv
+
+results_nonidentification[1,2] = coeffRV(matrix_Y,matrix_nonidentification)$p.value
+results_nonidentification[2,2] = coeffRV(matrix_X ,matrix_nonidentification)$p.value
+results_nonidentification[3,2] = coeffRV(matrix_lane ,matrix_nonidentification)$p.value
+results_nonidentification[4,2] = coeffRV(matrix_road ,matrix_nonidentification)$p.value
+results_nonidentification[5,2] = coeffRV(matrix_fence,matrix_nonidentification)$p.value
+results_nonidentification[6,2] = coeffRV(matrix_bus,matrix_nonidentification)$p.value
+results_nonidentification[7,2] = coeffRV(matrix_large.truck,matrix_nonidentification)$p.value
+results_nonidentification[8,2] = coeffRV(matrix_D.Urban,matrix_nonidentification)$p.value
+results_nonidentification[9,2] = coeffRV(matrix_D.agri ,matrix_nonidentification)$p.value
+results_nonidentification[10,2] = coeffRV(matrix_D.forest ,matrix_nonidentification)$p.value
+results_nonidentification[11,2] = coeffRV(matrix_D.grass ,matrix_nonidentification)$p.value
+results_nonidentification[12,2] = coeffRV(matrix_D.wetland,matrix_nonidentification)$p.value
+results_nonidentification[13,2] = coeffRV(matrix_D.bare,matrix_nonidentification)$p.value
+results_nonidentification[14,2] = coeffRV(matrix_D.water ,matrix_nonidentification)$p.value
+results_nonidentification[15,2] = coeffRV(matrix_A.Urban ,matrix_nonidentification)$p.value
+results_nonidentification[16,2] = coeffRV(matrix_A.agri ,matrix_nonidentification)$p.value
+results_nonidentification[17,2] = coeffRV(matrix_A.Grass ,matrix_nonidentification)$p.value
+results_nonidentification[18,2] = coeffRV(matrix_A.wetland ,matrix_nonidentification)$p.value
+results_nonidentification[19,2] = coeffRV(matrix_A.bare ,matrix_nonidentification)$p.value
+results_nonidentification[20,2] = coeffRV(matrix_A.water ,matrix_nonidentification)$p.value
+
+results_nonidentification[1,3] = cor.test(matrix_Y,matrix_nonidentification)$estimate
+results_nonidentification[2,3] = cor.test(matrix_X ,matrix_nonidentification)$estimate
+results_nonidentification[3,3] = cor.test(matrix_lane ,matrix_nonidentification)$estimate
+results_nonidentification[4,3] = cor.test(matrix_road ,matrix_nonidentification)$estimate
+results_nonidentification[5,3] = cor.test(matrix_fence,matrix_nonidentification)$estimate
+results_nonidentification[6,3] = cor.test(matrix_bus,matrix_nonidentification)$estimate
+results_nonidentification[7,3] = cor.test(matrix_large.truck,matrix_nonidentification)$estimate
+results_nonidentification[8,3] = cor.test(matrix_D.Urban,matrix_nonidentification)$estimate
+results_nonidentification[9,3] = cor.test(matrix_D.agri ,matrix_nonidentification)$estimate
+results_nonidentification[10,3] = cor.test(matrix_D.forest ,matrix_nonidentification)$estimate
+results_nonidentification[11,3] = cor.test(matrix_D.grass ,matrix_nonidentification)$estimate
+results_nonidentification[12,3] = cor.test(matrix_D.wetland,matrix_nonidentification)$estimate
+results_nonidentification[13,3] = cor.test(matrix_D.bare,matrix_nonidentification)$estimate
+results_nonidentification[14,3] = cor.test(matrix_D.water ,matrix_nonidentification)$estimate
+results_nonidentification[15,3] = cor.test(matrix_A.Urban ,matrix_nonidentification)$estimate
+results_nonidentification[16,3] = cor.test(matrix_A.agri ,matrix_nonidentification)$estimate
+results_nonidentification[17,3] = cor.test(matrix_A.Grass ,matrix_nonidentification)$estimate
+results_nonidentification[18,3] = cor.test(matrix_A.wetland ,matrix_nonidentification)$estimate
+results_nonidentification[19,3] = cor.test(matrix_A.bare ,matrix_nonidentification)$estimate
+results_nonidentification[20,3] = cor.test(matrix_A.water ,matrix_nonidentification)$estimate
+
+k1_PA <- rbind(results, results_subadult, results_juvenile, results_nonidentification)
+colnames(k1_PA)[1] <- "coef"
+colnames(k1_PA)[2] <- "pval"
+colnames(k1_PA)[3] <- "Corr"
+k1_PA$Div <- paste0("k1_", k1_PA$Target)
+
+k4_PA <- rbind(results, results_subadult, results_juvenile, results_nonidentification)
+colnames(k4_PA)[1] <- "coef"
+colnames(k4_PA)[2] <- "pval"
+colnames(k4_PA)[3] <- "Corr"
+k4_PA$Div <- paste0("k4_", k4_PA$Target)
+
+k7_PA <- rbind(results, results_subadult, results_juvenile, results_nonidentification)
+colnames(k7_PA)[1] <- "coef"
+colnames(k7_PA)[2] <- "pval"
+colnames(k7_PA)[3] <- "Corr"
+k7_PA$Div <- paste0("k7_", k7_PA$Target)
