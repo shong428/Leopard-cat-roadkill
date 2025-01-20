@@ -1,0 +1,936 @@
+datark$ad <- as.factor(datark$ad)
+datark$lane <- as.factor(datark$lane)
+datark$road <- as.factor(datark$road)
+datark$fence <- as.factor(datark$fence)
+datark$Year <- as.factor(datark$Year)
+
+
+datark <- data.frame(datark)
+
+datark_scaled <- scale(datark[, c("car", "bus", "small.struck",
+                                  "midsize.truck", "large.truck", "sum", "D.Urban",
+                                  "D.agri", "D.forest", "D.grass", "D.wetland", "D.bare", "D.water",
+                                  "A.Urban", "A.Road", "A.agri", "A.forest", "A.Grass", "A.wetland", "A.bare", "A.water")])
+
+#####################VIF
+
+a <- vifstep(datark[,c("car", "bus", "small.struck", "midsize.truck", "large.truck", "sum", "D.Urban", "D.agri", "D.forest", "D.grass", "D.wetland", "D.bare", "D.water", "A.Urban", "A.Road", "A.agri", "A.forest", "A.Grass", "A.wetland", "A.bare", "A.water")], th=3)->VIF 
+a
+VIF@results$Variables
+
+############total
+gh <-  mblogit(ad ~  bus + large.truck + D.Urban + D.agri +D.forest  + D.grass+  D.wetland+
+                 D.bare + D.water+ A.Urban + A.agri + A.Grass+ A.wetland +A.bare+  A.water+ lane + road + fence
+               , random=c(~1|Cluster),data = datark)
+gh <-  mblogit(ad ~  fence+ D.forest + bus + 
+                 ,data = datark)
+summary(gh)
+
+calculate_AICc <- function(AIC, k, n) {
+  AICc = AIC + (2 * k * (k + 1)) / (n - k - 1)
+  return(AICc)
+}
+
+################################################################### multi-model 1
+gh1 <-  mblogit(ad ~  bus + large.truck + D.Urban + D.agri + lane + A.agri+D.forest + fence, random=c(~1|Year),data = datark)
+summary(gh1)
+qq1 <- dredge(gh1, rank = "AIC")
+n <- nrow(datark) 
+qq1$AICc <- apply(qq1, 1, function(row) {
+  k <- as.numeric(row['df']) 
+  AIC <- as.numeric(row['AIC'])  
+  calculate_AICc(AIC, k, n)
+})
+qq1$delta_AICc <- qq1$AICc - min(qq1$AICc)
+rk1 <- get.models(qq1, subset = cumsum(delta_AICc) <= 2)
+rk11 <- model.avg(rk1, fit = TRUE)
+summary(rk11)
+
+################################################################### multi-model 2
+
+gh2 <- mblogit(ad ~  D.grass+  D.wetland+ D.bare + D.water+ A.Urban + fence + road , random=c(~1|Year),data = datark)
+summary(gh2)
+qq2 <- dredge(gh2, rank = "AIC")
+n <- nrow(datark)  
+qq2$AICc <- apply(qq2, 1, function(row) {
+  k <- as.numeric(row['df']) 
+  AIC <- as.numeric(row['AIC']) 
+  calculate_AICc(AIC, k, n)
+})
+qq2$delta_AICc <- qq2$AICc - min(qq2$AICc)
+rk2 <- get.models(qq2, subset = cumsum(delta_AICc) <= 2)
+rk22 <- model.avg(rk2, fit = TRUE)
+summary(rk22)
+
+################################################################### multi-model 3
+
+gh3 <-  mblogit(ad ~  A.Grass+ A.wetland +A.bare+  A.agri+D.forest + A.water, random=c(~1|Year),data = datark)
+summary(gh3)
+qq3 <- dredge(gh3, rank = "AIC")
+n <- nrow(datark)  
+qq3$AICc <- apply(qq3, 1, function(row) {
+  k <- as.numeric(row['df'])  
+  AIC <- as.numeric(row['AIC'])  
+  calculate_AICc(AIC, k, n)
+})
+qq3$delta_AICc <- qq3$AICc - min(qq3$AICc)
+rk3 <- get.models(qq3, subset = cumsum(delta_AICc) <= 2)
+rk33 <- model.avg(rk3, fit = TRUE)
+
+summary(rk33)
+
+###################################################Final Model####################
+datark$ad <- relevel(datark$ad, ref = "NO")
+ghsum <-  mblogit(ad ~ D.Urban + D.water + D.wetland + D.grass,data = datark)
+
+summary(ghsum)
+qqsum<-dredge(ghsum, evaluate=T, trace=2, m.lim=c(1, 5))
+
+row(qqsum)
+
+rksum <- get.models(qqsum, subset = cumsum(delta) <= 2)
+
+rksumsum <- model.avg(rksum, fit = TRUE)
+
+summary(rksumsum)
+summary(ghsum)
+
+
+
+#############################################################################
+####################################   Plot  ###############################
+#############################################################################
+
+range(datark$D.Urban)
+range(datark$D.water)
+range(datark$D.wetland)
+range(datark$D.grass)
+
+new_D.Urban <- rep(seq(-4.75, 2.63, length.out = 100),5)
+new_D.water <- rep(seq(-3.91, 2.58, length.out = 100),5)
+new_D.wetland <- rep(seq(-3.05, 2.21, length.out = 100),5)
+new_D.grass <- rep(seq(-2.41, 3.40, length.out = 100),5)
+
+Year <- rep( c("2019", "2020", "2021", "2022", "2023"), each = 100)
+
+new_D.Urban <- rep(seq(-4.75, 2.94, length.out = 100),5)
+new_D.water <- rep(seq(-3.91, 3.68, length.out = 100),5)
+new_D.wetland <- rep(seq(-3.21, 2.21, length.out = 100),5)
+new_D.grass <- rep(seq(-2.41, 4.53, length.out = 100),5)
+
+Year2019 <- rep( c("2019"), each = 100)
+Year2020 <- rep( c("2020"), each = 100)
+Year2021 <- rep( c("2021"), each = 100)
+Year2022 <- rep( c("2022"), each = 100)
+Year2023 <- rep( c("2023"), each = 100)
+
+new_data_D.Urban <- data.frame(D.Urban = new_D.Urban,
+                               D.water = mean(datark$D.water),
+                               D.wetland = mean(datark$D.wetland),
+                               D.grass = mean(datark$D.grass),
+                               Year = Year)
+new_data_D.Urban$Year <- as.factor(new_data_D.Urban$Year)
+
+new_data_D.water <- data.frame(D.Urban = mean(datark$D.Urban),
+                               D.water = new_D.water,
+                               D.wetland = mean(datark$D.wetland),
+                               D.grass = mean(datark$D.grass),
+                               Year = Year)
+new_data_D.water$Year <- as.factor(new_data_D.water$Year)
+
+new_data_D.wetland <- data.frame(D.Urban =mean(datark$D.Urban),
+                                 D.water = mean(datark$D.water),
+                                 D.wetland = new_D.wetland,
+                                 D.grass = mean(datark$D.grass),
+                                 Year = Year)
+new_data_D.wetland$Year <- as.factor(new_data_D.wetland$Year)
+
+new_data_D.grass <- data.frame(D.Urban = mean(datark$D.Urban),
+                               D.water = mean(datark$D.water),
+                               D.wetland = mean(datark$D.wetland),
+                               D.grass = new_D.grass,
+                               Year2019 = Year)
+new_data_D.grass$Year <- as.factor(new_data_D.grass$Year)
+
+
+predictions_D.Urban <- predict(ghsum,  type = "response", se.fit = TRUE, newdata= new_data_D.Urban)
+predictions_D.water <- predict(ghsum,  type = "response", se.fit = TRUE, newdata= new_data_D.water)
+predictions_D.wetland <- predict(ghsum,  type = "response", se.fit = TRUE, newdata= new_data_D.wetland)
+predictions_D.grass <- predict(ghsum,  type = "response", se.fit = TRUE, newdata= new_data_D.grass)
+
+fit_D.Urban <- as.data.frame(predictions_D.Urban$fit)
+fit_D.water <- as.data.frame(predictions_D.water$fit)
+fit_D.wetland <- as.data.frame(predictions_D.wetland$fit)
+fit_D.grass <- as.data.frame(predictions_D.grass$fit)
+
+se.fit_D.Urban <- as.data.frame(predictions_D.Urban$se.fit)
+se.fit_D.water <- as.data.frame(predictions_D.water$se.fit)
+se.fit_D.wetland <- as.data.frame(predictions_D.wetland$se.fit)
+se.fit_D.grass <- as.data.frame(predictions_D.grass$se.fit)
+
+lower_D.Urban <- fit_D.Urban - 1.96 * se.fit_D.Urban
+upper_D.Urban <- fit_D.Urban + 1.96 * se.fit_D.Urban
+
+lower_D.water <- fit_D.water - 1.96 * se.fit_D.water
+upper_D.water <- fit_D.water + 1.96 * se.fit_D.water
+
+lower_D.wetland <- fit_D.wetland - 1.96 * se.fit_D.wetland
+upper_D.wetland <- fit_D.wetland + 1.96 * se.fit_D.wetland
+
+lower_D.grass <- fit_D.grass - 1.96 * se.fit_D.grass
+upper_D.grass <- fit_D.grass + 1.96 * se.fit_D.grass
+
+
+names(fit_D.Urban) <- paste0("fit.", names(fit_D.Urban))
+names(lower_D.Urban) <- paste0("lower.", names(lower_D.Urban))
+names(upper_D.Urban) <- paste0("upper.", names(upper_D.Urban))
+
+names(fit_D.water) <- paste0("fit.", names(fit_D.water))
+names(lower_D.water) <- paste0("lower.", names(lower_D.water))
+names(upper_D.water) <- paste0("upper.", names(upper_D.water))
+
+names(fit_D.wetland) <- paste0("fit.", names(fit_D.wetland))
+names(lower_D.wetland) <- paste0("lower.", names(lower_D.wetland))
+names(upper_D.wetland) <- paste0("upper.", names(upper_D.wetland))
+
+names(fit_D.grass) <- paste0("fit.", names(fit_D.grass))
+names(lower_D.grass) <- paste0("lower.", names(lower_D.grass))
+names(upper_D.grass) <- paste0("upper.", names(upper_D.grass))
+
+
+pp.write_D.Urban <- cbind(new_data_D.Urban, fit_D.Urban, lower_D.Urban, upper_D.Urban)
+pp.write_D.water <- cbind(new_data_D.water, fit_D.water, lower_D.water, upper_D.water)
+pp.write_D.wetland <- cbind(new_data_D.wetland, fit_D.wetland, lower_D.wetland, upper_D.wetland)
+pp.write_D.grass <- cbind(new_data_D.grass, fit_D.grass, lower_D.grass, upper_D.grass)
+
+
+
+pp.write_D.Urban2019 <- subset(pp.write_D.Urban, Year == 2019)
+pp.write_D.water2019 <- subset(pp.write_D.water, Year == 2019)
+pp.write_D.wetland2019 <- subset(pp.write_D.wetland, Year == 2019)
+pp.write_D.grass2019 <- subset(pp.write_D.grass, Year == 2019)
+
+
+
+UB2019 <- ggplot(pp.write_D.Urban2019, aes(x = D.Urban)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.Urban", y = "2019") +  # 축과 범례 제목 설정
+  theme_minimal()+ ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+UB2019                                    
+
+
+WT2019 <- ggplot(pp.write_D.water2019, aes(x = D.water)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.water", y = "2019") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WT2019                                    
+
+WL2019 <- ggplot(pp.write_D.wetland2019, aes(x = D.wetland)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.wetland", y = "2019") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+# 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WL2019                                    
+
+
+GR2019 <- ggplot(pp.write_D.grass2019, aes(x = D.grass)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.grass", y = "2019") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+GR2019                                    
+
+
+
+pp.write_D.Urban2020 <- subset(pp.write_D.Urban, Year == 2020)
+pp.write_D.water2020 <- subset(pp.write_D.water, Year == 2020)
+pp.write_D.wetland2020 <- subset(pp.write_D.wetland, Year == 2020)
+pp.write_D.grass2020 <- subset(pp.write_D.grass, Year == 2020)
+
+
+
+UB2020 <- ggplot(pp.write_D.Urban2020, aes(x = D.Urban)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.Urban", y = "2020") +  # 축과 범례 제목 설정
+  theme_minimal()+ ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+UB2020                                    
+
+
+WT2020 <- ggplot(pp.write_D.water2020, aes(x = D.water)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.water", y = "2020") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WT2020                                    
+
+WL2020 <- ggplot(pp.write_D.wetland2020, aes(x = D.wetland)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.wetland", y = "2020") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+# 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WL2020                                    
+
+
+GR2020 <- ggplot(pp.write_D.grass2020, aes(x = D.grass)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.grass", y = "2020") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+GR2020                                    
+
+
+
+pp.write_D.Urban2021 <- subset(pp.write_D.Urban, Year == 2021)
+pp.write_D.water2021 <- subset(pp.write_D.water, Year == 2021)
+pp.write_D.wetland2021 <- subset(pp.write_D.wetland, Year == 2021)
+pp.write_D.grass2021 <- subset(pp.write_D.grass, Year == 2021)
+
+
+
+UB2021 <- ggplot(pp.write_D.Urban2021, aes(x = D.Urban)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.Urban", y = "2021") +  # 축과 범례 제목 설정
+  theme_minimal()+ ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+UB2021                                    
+
+
+WT2021 <- ggplot(pp.write_D.water2021, aes(x = D.water)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.water", y = "2021") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WT2021                                    
+
+WL2021 <- ggplot(pp.write_D.wetland2021, aes(x = D.wetland)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.wetland", y = "2021") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+# 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WL2021                                    
+
+
+GR2021 <- ggplot(pp.write_D.grass2021, aes(x = D.grass)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.grass", y = "2021") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+GR2021                                    
+
+
+pp.write_D.Urban2022 <- subset(pp.write_D.Urban, Year == 2022)
+pp.write_D.water2022 <- subset(pp.write_D.water, Year == 2022)
+pp.write_D.wetland2022 <- subset(pp.write_D.wetland, Year == 2022)
+pp.write_D.grass2022 <- subset(pp.write_D.grass, Year == 2022)
+
+
+
+UB2022 <- ggplot(pp.write_D.Urban2022, aes(x = D.Urban)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.Urban", y = "2022") +  # 축과 범례 제목 설정
+  theme_minimal()+ ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+UB2022                                    
+
+
+WT2022 <- ggplot(pp.write_D.water2022, aes(x = D.water)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.water", y = "2022") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WT2022                                    
+
+WL2022 <- ggplot(pp.write_D.wetland2022, aes(x = D.wetland)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.wetland", y = "2022") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+# 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WL2022                                    
+
+
+GR2022 <- ggplot(pp.write_D.grass2022, aes(x = D.grass)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.grass", y = "2022") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+GR2022                                    
+
+
+
+pp.write_D.Urban2023 <- subset(pp.write_D.Urban, Year == 2023)
+pp.write_D.water2023 <- subset(pp.write_D.water, Year == 2023)
+pp.write_D.wetland2023 <- subset(pp.write_D.wetland, Year == 2023)
+pp.write_D.grass2023 <- subset(pp.write_D.grass, Year == 2023)
+
+
+
+UB2023 <- ggplot(pp.write_D.Urban2023, aes(x = D.Urban)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.Urban", y = "2023") +  # 축과 범례 제목 설정
+  theme_minimal()+ ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+UB2023                                    
+
+
+WT2023 <- ggplot(pp.write_D.water2023, aes(x = D.water)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.water", y = "2023") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WT2023                                    
+
+WL2023 <- ggplot(pp.write_D.wetland2023, aes(x = D.wetland)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.wetland", y = "2023") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+# 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+WL2023                                    
+
+
+GR2023 <- ggplot(pp.write_D.grass2023, aes(x = D.grass)) +
+  geom_line(aes(y = lower.NO), linetype = "dashed", color="coral") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.NO), linetype = "dashed", color="coral") +
+  geom_line(aes(y = lower.AD), linetype = "dashed", color="chartreuse2") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.AD), linetype = "dashed", color="chartreuse2") +
+  geom_line(aes(y = lower.SubAD), linetype = "dashed", color="deeppink1") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.SubAD), linetype = "dashed", color="deeppink1") +
+  geom_line(aes(y = lower.JV), linetype = "dashed", color="darkgreen") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.JV), linetype = "dashed", color="darkgreen") +
+  geom_line(aes(y = lower.UNID), linetype = "dashed", color="cyan3") +  # lower에 해당하는 선
+  geom_line(aes(y = upper.UNID), linetype = "dashed", color="cyan3") +
+  geom_line(aes(y=fit.NO), color="coral", linewidth = 2) + 
+  geom_line(aes(y=fit.AD), color="chartreuse2", linewidth = 2) +
+  geom_line(aes(y=fit.SubAD), color="deeppink1", linewidth = 2) +
+  geom_line(aes(y=fit.JV), color="darkgreen", linewidth = 2) +
+  geom_line(aes(y=fit.UNID), color="cyan3", linewidth = 2) +
+  labs(x = "D.grass", y = "2023") +  # 축과 범례 제목 설정
+  theme_minimal() + ylim(0,1)+ # 깔끔한 테마 적용
+  theme_bw()+
+  theme(
+    legend.position = "right",
+    axis.text = element_text(size = 8),
+    axis.text.x = element_text(face = "bold", color = "black", size = 11),
+    axis.text.y = element_text(face = "bold", color = "black", size = 11),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    axis.title.y = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0), color = "black", size = 17, face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black")
+  )                       
+GR2023         
+
+
+
+library(ggpubr)
+figure_all<- ggarrange(UB2019,UB2020,UB2021,UB2022,UB2023,
+                       WT2019,WT2020,WT2021,WT2022,WT2023,
+                       WL2019,WL2020,WL2021,WL2022,WL2023,
+                       GR2019,GR2020,GR2021,GR2022,GR2023,
+                       ncol=5,nrow=4)
+figure_all      
+figure_all<- ggarrange(UB2019,WT2019,WL2019,GR2019,
+                       UB2020,WT2020,WL2020,GR2020,
+                       UB2021,WT2021,WL2021,GR2021,
+                       UB2022,WT2022,WL2022,GR2022,
+                       UB2023,WT2023,WL2023,GR2023,
+                       ncol=4,nrow=5)
+
+figure_all
